@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/deislabs/cnab-go/bundle"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/deislabs/cnab-go/bundle"
+	"github.com/spf13/cobra"
 
 	"github.com/simongdavies/atfcnab/pkg/template"
 )
@@ -48,7 +49,7 @@ func Execute() {
 
 func generateTemplate(bundleloc string, outputfile string, overwrite bool, indent bool) error {
 
-	// TODO suport http uri and registry based bundle
+	// TODO support http uri and registry based bundle
 
 	bundle, err := loadBundle(bundleloc)
 
