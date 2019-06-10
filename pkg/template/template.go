@@ -123,7 +123,7 @@ type Outputs struct {
 func NewTemplate() Template {
 
 	resources := []Resource{
-		Resource{
+		{
 			Condition:  "[equals(parameters('cnab_state_storage_account_resource_group'),resourceGroup().name)]",
 			Type:       "Microsoft.Storage/storageAccounts",
 			Name:       "[parameters('cnab_state_storage_account_name')]",
@@ -144,7 +144,7 @@ func NewTemplate() Template {
 				},
 			},
 		},
-		Resource{
+		{
 			Name:       ContainerGroupName,
 			Type:       "Microsoft.ContainerInstance/containerGroups",
 			APIVersion: "2018-10-01",
@@ -154,7 +154,7 @@ func NewTemplate() Template {
 			},
 			Properties: ContainerGroupProperties{
 				Containers: []Container{
-					Container{
+					{
 						Name: ContainerName,
 						Properties: ContainerProperties{
 							Image: Image,
@@ -166,31 +166,31 @@ func NewTemplate() Template {
 							},
 							EnvironmentVariables: []EnvironmentVariable{
 
-								EnvironmentVariable{
+								{
 									Name:  "CNAB_ACTION",
 									Value: "[parameters('cnab_action')]",
 								},
-								EnvironmentVariable{
+								{
 									Name:  "CNAB_INSTALLATION_NAME",
 									Value: "[parameters('cnab_installation_name')]",
 								},
-								EnvironmentVariable{
+								{
 									Name:  "ACI_LOCATION",
 									Value: "[parameters('location')]",
 								},
-								EnvironmentVariable{
+								{
 									Name:  "CNAB_STATE_STORAGE_ACCOUNT_NAME",
 									Value: "[parameters('cnab_state_storage_account_name')]",
 								},
-								EnvironmentVariable{
+								{
 									Name:        "CNAB_STATE_STORAGE_ACCOUNT_KEY",
 									SecureValue: "[parameters('cnab_state_storage_account_key')]",
 								},
-								EnvironmentVariable{
+								{
 									Name:  "CNAB_STATE_SHARE_NAME",
 									Value: "[parameters('cnab_state_share_name')]",
 								},
-								EnvironmentVariable{
+								{
 									Name:  "VERBOSE",
 									Value: "false",
 								},

@@ -19,3 +19,5 @@ vendor/
 __pycache__/
 .vscode/settings.json
 /bin
+azuredeploy.json
+bundle.json

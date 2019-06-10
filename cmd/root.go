@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"strings"
-
 	"github.com/deislabs/cnab-go/bundle"
 	"github.com/spf13/cobra"
+	"io/ioutil"
+	"os"
+	"strings"
 
 	"github.com/simongdavies/atfcnab/pkg/template"
 )
@@ -16,15 +16,27 @@ const (
 	bundlecontainerregistry = "cnabquickstartstest.azurecr.io/"
 )
 
+var bundleloc string
+var outputloc string
+var overwrite bool
+var indent bool
+
 var rootCmd = &cobra.Command{
 	Use:   "atfcnab",
 	Short: "atfcnab generates an ARM template for executing a CNAB package using Azure ACI",
 	Long:  `atfcnab generates an ARM template which can be used to execute Duffle in a container using ACI to perform actions on a CNAB Package, which in turn executes the CNAB Actions using the Duffle ACI Driver   `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return generateTemplate()
+		cmd.SilenceUsage = true
+		return generateTemplate(bundleloc, outputloc, overwrite, indent)
 
 	},
-	SilenceUsage: true,
+}
+
+func init() {
+	rootCmd.Flags().StringVarP(&bundleloc, "bundle", "b", "bundle.json", "name of bundle file to generate template for , default is bundle.json")
+	rootCmd.Flags().StringVarP(&outputloc, "file", "f", "azuredeploy.json", "file name for generated template,default is azuredeploy.json")
+	rootCmd.Flags().BoolVarP(&overwrite, "overwrite", "o", false, "specifies if to overwrite the output file if it already exists, default is false")
+	rootCmd.Flags().BoolVarP(&indent, "indent", "i", false, "specifies if the json output should be indented")
 }
 
 // Execute runs the template generator
@@ -34,12 +46,17 @@ func Execute() {
 	}
 }
 
-func generateTemplate() error {
+func generateTemplate(bundleloc string, outputfile string, overwrite bool, indent bool) error {
 
-	bundle, err := loadBundle("./bundle.json")
+	// TODO suport http uri and registry based bundle
+
+	bundle, err := loadBundle(bundleloc)
 
 	if err != nil {
-		fmt.Printf("Failed to load Bundle: %v", err)
+		return err
+	}
+
+	if err = checkOutputFile(outputloc, overwrite); err != nil {
 		return err
 	}
 
@@ -113,9 +130,16 @@ func generateTemplate() error {
 		generatedTemplate.SetContainerEnvironmentVariable(environmentVariable)
 	}
 
-	res, _ := json.Marshal(generatedTemplate)
-	output := string(res)
-	fmt.Println(output)
+	var data []byte
+	if indent {
+		data, _ = json.MarshalIndent(generatedTemplate, "", "\t")
+	} else {
+		data, _ = json.Marshal(generatedTemplate)
+	}
+
+	if err := ioutil.WriteFile(outputloc, data, 0644); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -132,9 +156,22 @@ func getBundleName(bundle *bundle.Bundle) (string, error) {
 func loadBundle(source string) (*bundle.Bundle, error) {
 	_, err := os.Stat(source)
 	if err == nil {
-		jsonFile, _ := os.Open("./bundle.json")
+		jsonFile, _ := os.Open(source)
 		bundle, err := bundle.ParseReader(jsonFile)
 		return &bundle, err
 	}
 	return nil, err
+}
+func checkOutputFile(dest string, overwrite bool) error {
+	if _, err := os.Stat(dest); err == nil {
+		if !overwrite {
+			return fmt.Errorf("File %s exists and overwrite not specified", dest)
+		}
+	} else {
+		if !os.IsNotExist(err) {
+			return err
+		}
+	}
+
+	return nil
 }
