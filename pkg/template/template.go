@@ -33,7 +33,7 @@ type Parameter struct {
 
 // Sku is defines a SKU for template resource
 type Sku struct {
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 }
 
 // File defines if encryption is enabled for file shares in a storage account created by the template
@@ -102,7 +102,7 @@ type Resource struct {
 	Name       string      `json:"name"`
 	APIVersion string      `json:"apiVersion"`
 	Location   string      `json:"location"`
-	Sku        Sku         `json:"sku,omitempty"`
+	Sku        *Sku        `json:"sku,omitempty"`
 	Kind       string      `json:"kind,omitempty"`
 	DependsOn  []string    `json:"dependsOn,omitempty"`
 	Properties interface{} `json:"properties"`
@@ -129,7 +129,7 @@ func NewTemplate() Template {
 			Name:       "[parameters('cnab_state_storage_account_name')]",
 			APIVersion: "2019-04-01",
 			Location:   "[parameters('location')]",
-			Sku: Sku{
+			Sku: &Sku{
 				Name: "Standard_LRS",
 			},
 			Kind: "StorageV2",
@@ -209,23 +209,23 @@ func NewTemplate() Template {
 			Type:         "string",
 			DefaultValue: "[resourceGroup().Location]",
 			AllowedValues: []string{
-				"West US",
-				"East US",
-				"West Europe",
-				"West US 2",
-				"North Europe",
-				"Southeast Asia",
-				"East US 2",
-				"Central US",
-				"Australia East",
-				"UK South",
-				"South Central US",
-				"Central India",
-				"South India",
-				"North Central US",
-				"East Asia",
-				"Canada Central",
-				"Japan East",
+				"westus",
+				"eastus",
+				"westeurope",
+				"westus2",
+				"northeurope",
+				"southeastasia",
+				"eastus2",
+				"centralus",
+				"australiaeast",
+				"uksouth",
+				"southcentralus",
+				"centralindia",
+				"southindia",
+				"northcentralus",
+				"eastasia",
+				"canadacentral",
+				"japaneast",
 			},
 			Metadata: &Metadata{
 				Description: "The location in which the resources will be created.",
@@ -236,13 +236,6 @@ func NewTemplate() Template {
 			DefaultValue: "install",
 			Metadata: &Metadata{
 				Description: "The name of the action to be performed on the application instance.",
-			},
-		},
-		"cnab_installation_name": {
-			Type:         "string",
-			DefaultValue: "install",
-			Metadata: &Metadata{
-				Description: "The name of the application instance.",
 			},
 		},
 		"containerGroupName": {

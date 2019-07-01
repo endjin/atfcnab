@@ -71,32 +71,62 @@ func generateTemplate(bundleloc string, outputfile string, overwrite bool, inden
 		Name:  "CNAB_BUNDLE_NAME",
 		Value: bundleName,
 	}
+
+	// Set the default installation name to be the bundle name
+
+	installationName := strings.ReplaceAll(bundleName, "/", "-")
+	generatedTemplate.Parameters["cnab_installation_name"] = template.Parameter{
+		Type:         "string",
+		DefaultValue: installationName,
+		Metadata: &template.Metadata{
+			Description: "The name of the application instance.",
+		},
+	}
+
 	generatedTemplate.SetContainerEnvironmentVariable(environmentVariable)
 
 	for n, p := range bundle.Parameters {
-		var metadata template.Metadata
-		if p.Metadata != nil && p.Metadata.Description != "" {
-			metadata = template.Metadata{
-				Description: p.Metadata.Description,
+
+		// Parameter names cannot contain - as they are converted into environment variables set on duffle ACI container
+
+		// porter-debug is added automatically so can only be modified by updating porter
+
+		if n == "porter-debug" {
+			continue
+		}
+
+		if strings.Contains(n, "-") {
+			return fmt.Errorf("Invalid Parameter name: %s.ARM template generation requires parameter names that can be used as environment variables", n)
+		}
+
+		// Location parameter is added to template definition automatically as ACI uses it
+		if n != "location" {
+
+			var metadata template.Metadata
+			if p.Metadata != nil && p.Metadata.Description != "" {
+				metadata = template.Metadata{
+					Description: p.Metadata.Description,
+				}
+			}
+
+			var allowedValues interface{}
+			if p.AllowedValues != nil {
+				allowedValues = p.AllowedValues
+			}
+
+			var defaultValue interface{}
+			if p.DefaultValue != nil {
+				defaultValue = p.DefaultValue
+			}
+
+			generatedTemplate.Parameters[n] = template.Parameter{
+				Type:          p.DataType,
+				AllowedValues: allowedValues,
+				DefaultValue:  defaultValue,
+				Metadata:      &metadata,
 			}
 		}
 
-		var allowedValues interface{}
-		if p.AllowedValues != nil {
-			allowedValues = p.AllowedValues
-		}
-
-		var defaultValue interface{}
-		if p.Default != nil {
-			defaultValue = p.Default
-		}
-
-		generatedTemplate.Parameters[n] = template.Parameter{
-			Type:          p.DataType,
-			AllowedValues: allowedValues,
-			DefaultValue:  defaultValue,
-			Metadata:      &metadata,
-		}
 		environmentVariable := template.EnvironmentVariable{
 			Name:  strings.ToUpper(n),
 			Value: fmt.Sprintf("[parameters('%s')]", n),
@@ -107,6 +137,10 @@ func generateTemplate(bundleloc string, outputfile string, overwrite bool, inden
 	}
 
 	for n := range bundle.Credentials {
+
+		if strings.Contains(n, "-") {
+			return fmt.Errorf("Invalid Credential name: %s.ARM template generation requires credential names that can be used as environment variables", n)
+		}
 
 		var environmentVariable template.EnvironmentVariable
 
@@ -148,7 +182,10 @@ func getBundleName(bundle *bundle.Bundle) (string, error) {
 
 	for _, i := range bundle.InvocationImages {
 		if i.ImageType == "docker" {
-			return strings.TrimPrefix(strings.Split(i.Image, ":")[0], bundlecontainerregistry), nil
+			if i.Digest == "" {
+				return strings.TrimPrefix(strings.Split(i.Image, ":")[0], bundlecontainerregistry), nil
+			}
+			return strings.TrimPrefix(strings.Split(i.Image, "@")[0], bundlecontainerregistry), nil
 		}
 	}
 

@@ -29,3 +29,6 @@
   go-tests = true
   unused-packages = true
 
+[[constraint]]
+  name = "github.com/deislabs/cnab-go"
+  revision ="9028f0f800a40977c2e49a38be764978cfe82324"
