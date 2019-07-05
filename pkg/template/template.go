@@ -179,6 +179,10 @@ func NewTemplate() Template {
 									Value: "[parameters('location')]",
 								},
 								{
+									Name:  "AZURE_SUBSCRIPTION_ID",
+									Value: "[subscription().subscriptionId]",
+								},
+								{
 									Name:  "CNAB_STATE_STORAGE_ACCOUNT_NAME",
 									Value: "[parameters('cnab_state_storage_account_name')]",
 								},
@@ -205,6 +209,9 @@ func NewTemplate() Template {
 	}
 
 	parameters := map[string]Parameter{
+
+		// TODO:This needs to be renamed to ACI_LOCATION once changes to driver are done so that ACI adn resources can be in different locations
+		// TODO:The allowed values should be generated automatically based on ACI availability
 		"location": {
 			Type:         "string",
 			DefaultValue: "[resourceGroup().Location]",
@@ -262,7 +269,7 @@ func NewTemplate() Template {
 		"cnab_state_storage_account_key": {
 			Type: "string",
 			Metadata: &Metadata{
-				Description: "The storage account key for the account for the CNAB state to be stored in, by default this will be looked up",
+				Description: "The storage account key for the account for the CNAB state to be stored in, if this is left blank it will be looked up at runtime",
 			},
 			DefaultValue: "",
 		},
